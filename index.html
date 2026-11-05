@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="theme-color" content="#171718"/><title>Casa dos Pensamentos — Museu Virtual</title>
+<style>
+:root{font-family:Georgia,serif;color:#f5efe5;background:#171718}*{box-sizing:border-box}body{margin:0}#scene{position:fixed;inset:0}canvas{display:block}header{position:fixed;top:0;left:0;right:0;padding:18px 24px;background:linear-gradient(#111e,transparent);pointer-events:none}h1{font-size:clamp(22px,3vw,36px);margin:0;font-weight:400;letter-spacing:.04em}header p{margin:6px 0;color:#dbc6a1;font-size:13px}nav{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:min(95%,850px)}button{border:1px solid #bba47d;background:#171718e8;color:#f5efe5;border-radius:22px;padding:11px 15px;cursor:pointer;font:14px system-ui}button:hover,button:focus-visible{background:#64523c;outline:2px solid #f4d7a2}#help{position:fixed;right:16px;top:20px;font:12px system-ui;color:#eee;max-width:210px;text-align:right}#card{position:fixed;inset:auto 16px 100px auto;max-width:min(380px,calc(100vw - 32px));background:#201e1cf5;border:1px solid #bba47d;border-radius:14px;padding:22px;box-shadow:0 12px 60px #0008}#card h2{margin:0 30px 8px 0;font-weight:400}#card p{line-height:1.55}#close{position:absolute;right:12px;top:12px}#touch{position:fixed;left:14px;bottom:100px;display:flex;gap:8px}#touch button{font-size:18px;padding:12px}@media(min-width:800px){#touch{display:none}}@media(max-width:650px){#help{top:85px;font-size:11px}header{padding:14px}#card{bottom:160px}nav{bottom:10px}nav button{padding:9px;font-size:12px}#touch{bottom:90px}}
+</style></head><body>
+<div id="scene" aria-label="Museu virtual em três dimensões"></div>
+<header><h1>Casa dos Pensamentos</h1><p>Um museu de tudo aquilo que vive dentro de mim.</p></header>
+<div id="help">Explore as salas • WASD / setas para andar • arraste para olhar • toque nas obras</div>
+<nav aria-label="Escolher sala"><button data-room="0">Entrada</button><button data-room="1">Pensamentos</button><button data-room="2">Sentimentos</button><button data-room="3">Galeria</button><button data-room="4">Laboratório</button><button id="archive">Arquivo</button></nav>
+<div id="touch"><button id="back" aria-label="Voltar">↓</button><button id="forward" aria-label="Avançar">↑</button></div>
+<section id="card" hidden role="dialog" aria-label="Detalhes da obra"><button id="close" aria-label="Fechar">×</button><h2 id="ct"></h2><p id="cb"></p><small id="cd"></small></section>
+<script type="module">
+import * as THREE from 'https://esm.sh/three@0.170.0';
+const el=document.querySelector('#scene'),scene=new THREE.Scene();scene.background=new THREE.Color('#151617');scene.fog=new THREE.Fog('#151617',18,65);
+const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,100);camera.position.set(0,1.7,4);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;el.append(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xffe5bd,0x32333b,2));const light=new THREE.DirectionalLight(0xffddac,2);light.position.set(3,8,6);scene.add(light);
+const mat=(c)=>new THREE.MeshStandardMaterial({color:c,roughness:.85,side:THREE.DoubleSide});
+const floor=mat('#4b4540'),wall=mat('#d2c6b4'),dark=mat('#222124'),gold=mat('#c2a574');
+function cube(x,y,z,w,h,d,m){const a=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);a.position.set(x,y,z);scene.add(a);return a}
+const labels=['Entrada','Pensamentos','Sentimentos','Galeria','Laboratório'];
+for(let i=0;i<5;i++){const z=-i*10;cube(0,-.12,z,11,.2,10,floor);cube(0,5,z,11,.2,10,dark);cube(-5.5,2.5,z,.2,5,10,wall);cube(5.5,2.5,z,.2,5,10,wall);
+if(i===4)cube(0,2.5,z-4.9,11,5,.2,wall);
+for(const x of [-3.5,3.5]){const lamp=new THREE.PointLight(0xffd8a4,14,9);lamp.position.set(x,4.3,z);scene.add(lamp)}
+if(i>0){const m=new THREE.Mesh(new THREE.TorusGeometry(1.4,.035,8,64),gold);m.position.set(0,2.6,z);scene.add(m)}
+}
+const works=[
+{room:1,title:'O que permanece',body:'Nem tudo o que passa por nós precisa desaparecer. Algumas ideias merecem uma casa.',date:'Obra demonstrativa'},
+{room:1,title:'Entre perguntas',body:'Às vezes, uma pergunta é uma janela que ainda não aprendemos a abrir.',date:'Obra demonstrativa'},
+{room:2,title:'Carta ao tempo',body:'Guardo aqui as palavras que não chegaram a ser ditas.',date:'Obra demonstrativa'},
+{room:2,title:'Saudade',body:'Há lugares que continuam vivos mesmo depois de partirmos.',date:'Obra demonstrativa'},
+{room:3,title:'Luz interior',body:'Uma composição abstrata sobre o encontro entre sombra e memória.',date:'Obra demonstrativa'},
+{room:3,title:'Horizonte',body:'A possibilidade de recomeçar desenhada em cores.',date:'Obra demonstrativa'},
+{room:4,title:'Uma casa infinita',body:'Um espaço que cresce sempre que nasce uma nova criação.',date:'Obra demonstrativa'},
+{room:4,title:'O amanhã',body:'Um laboratório para ideias que ainda estão a tomar forma.',date:'Obra demonstrativa'}];
+const paintings=[];works.forEach((w,k)=>{const z=-w.room*10+(k%2?1.9:-1.9);const side=k%2?1:-1;const frame=cube(side*5.25,2.3,z,.2,2.6,3.4,gold);const art=cube(side*5.1,2.3,z,.24,2.3,3.1,mat(['#6c5664','#526974','#716348','#46665e'][w.room-1]));art.userData.work=w;paintings.push(art)});
+const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();function show(w){document.querySelector('#ct').textContent=w.title;document.querySelector('#cb').textContent=w.body;document.querySelector('#cd').textContent=w.date;document.querySelector('#card').hidden=false}document.querySelector('#close').onclick=()=>document.querySelector('#card').hidden=true;
+let drag=false,px=0,py=0,yaw=0,pitch=0,moved=false;
+renderer.domElement.addEventListener('pointerdown',e=>{drag=true;moved=false;px=e.clientX;py=e.clientY;renderer.domElement.setPointerCapture(e.pointerId)});
+renderer.domElement.addEventListener('pointermove',e=>{if(!drag)return;let dx=e.clientX-px,dy=e.clientY-py;if(Math.abs(dx)+Math.abs(dy)>2)moved=true;yaw-=dx*.003;pitch=Math.max(-.7,Math.min(.7,pitch-dy*.003));px=e.clientX;py=e.clientY});
+renderer.domElement.addEventListener('pointerup',e=>{drag=false;if(moved)return;pointer.x=e.clientX/innerWidth*2-1;pointer.y=-(e.clientY/innerHeight)*2+1;ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(paintings)[0];if(hit)show(hit.object.userData.work)});
+const keys=new Set();addEventListener('keydown',e=>{keys.add(e.key.toLowerCase());if(['arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase()))e.preventDefault()});addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
+document.querySelectorAll('[data-room]').forEach(b=>b.onclick=()=>{camera.position.set(0,1.7,-Number(b.dataset.room)*10+2);yaw=0;pitch=0;document.querySelector('#card').hidden=true});
+document.querySelector('#archive').onclick=()=>show({title:'Arquivo de criações',body:works.map(w=>w.title+' — '+labels[w.room]).join(' • ')+' . Em breve: arquivo dinâmico com datas e filtros.',date:'Primeira versão demonstrativa'});
+for(const [id,key] of [['forward','w'],['back','s']]){const b=document.getElementById(id);b.addEventListener('pointerdown',()=>keys.add(key));for(const ev of ['pointerup','pointercancel','pointerleave'])b.addEventListener(ev,()=>keys.delete(key))}
+let previous=performance.now();function animate(t){const dt=Math.min((t-previous)/1000,.05);previous=t;camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;const v=new THREE.Vector3();if(keys.has('w')||keys.has('arrowup'))v.z-=1;if(keys.has('s')||keys.has('arrowdown'))v.z+=1;if(keys.has('a')||keys.has('arrowleft'))v.x-=1;if(keys.has('d')||keys.has('arrowright'))v.x+=1;if(v.length()){v.normalize().applyAxisAngle(new THREE.Vector3(0,1,0),yaw).multiplyScalar(dt*3.5);camera.position.add(v);camera.position.x=Math.max(-4.7,Math.min(4.7,camera.position.x));camera.position.z=Math.max(-44,Math.min(4,camera.position.z))}renderer.render(scene,camera);requestAnimationFrame(animate)}requestAnimationFrame(animate);
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script></body></html>
